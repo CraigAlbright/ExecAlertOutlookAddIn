@@ -96,20 +96,6 @@ namespace ExecutiveAlert
 
         }
 
-        private void NewMailInspector(Outlook.Inspector inspector)
-        {
-            var mailItem = inspector.CurrentItem as Outlook.MailItem;
-            if (mailItem != null)
-            {
-                if (mailItem.EntryID == null)
-                {
-                    mailItem.Subject = "This text was added by using code";
-                    mailItem.Body = "This text was added by using code";
-                }
-
-            }
-        }
-
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
         {
         }
