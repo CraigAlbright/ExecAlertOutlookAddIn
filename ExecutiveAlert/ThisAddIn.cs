@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Drawing;
 using System.Linq;
+using System.Windows.Forms;
+using stdole;
 using Outlook = Microsoft.Office.Interop.Outlook;
 using Office = Microsoft.Office.Core;
 
@@ -10,19 +13,90 @@ namespace ExecutiveAlert
         Outlook.NameSpace _outlookNameSpace;
         Outlook.MAPIFolder _inbox;
         Outlook.Items _items;
-        private Outlook.MAPIFolder _contacts;
+        Outlook.MAPIFolder _contacts; 
+        Office.CommandBar _newToolBar;
+        Office.CommandBarButton _firstButton;
+        Office.CommandBarButton _secondButton;
+        Outlook.Explorers _selectExplorers;
         private void ThisAddIn_Startup(object sender, EventArgs e)
         {
+            //Executive flag addin
             _outlookNameSpace = Application.GetNamespace("MAPI");
             _inbox = _outlookNameSpace.GetDefaultFolder(
                 Outlook.OlDefaultFolders.olFolderInbox);
 
-
+            //Generate contacts from email I have received from capSpire
             _contacts = _outlookNameSpace.GetDefaultFolder(Outlook.OlDefaultFolders.olFolderContacts);
             _items = _inbox.Items;
             _items.ItemAdd +=
                 items_ItemAdd;
             AddContactsToItems();
+
+            _selectExplorers = Application.Explorers;
+            _selectExplorers.NewExplorer += newExplorer_Event;
+            AddToolbar();
+        }
+
+        private void newExplorer_Event(Outlook.Explorer explorer)
+        {
+            
+        }
+
+        private void AddToolbar()
+        {
+
+            if (_newToolBar == null)
+            {
+                var cmdBars =
+                    Application.ActiveExplorer().CommandBars;
+                _newToolBar = cmdBars.Add("Create Contacts",
+                    Office.MsoBarPosition.msoBarTop, false, true);
+            }
+            try
+            {
+                var createCapContacts =
+                    (Office.CommandBarButton)_newToolBar.Controls
+                    .Add(1, missing, missing, missing, missing);
+                createCapContacts.Style = Office
+                    .MsoButtonStyle.msoButtonIconAndCaption;
+                createCapContacts.Caption = "Create capSpire Contacts";
+
+                Image logo = Image.FromFile(
+                        @"C:\Users\Craig\documents\visual studio 2013\Projects\ExecutiveAlert\ExecutiveAlert\Images\CapLogo.png");
+                
+                createCapContacts.Picture = PictureConverter.ImageToPictureDisp(logo);
+                
+                createCapContacts.Width = 130;
+                createCapContacts.Height = 130;
+                createCapContacts.Tag = "createContacts";
+                if (_firstButton == null)
+                {
+                    _firstButton = createCapContacts;
+                    _firstButton.Click += ButtonClick;
+                }
+                //Todo: second button idea
+                var button2 = (Office.CommandBarButton)_newToolBar.Controls.Add(1);
+                button2.Style = Office.MsoButtonStyle.msoButtonIconAndCaption;
+                button2.Caption = "Button 2";
+                button2.Tag = "Button2";
+                _newToolBar.Visible = true;
+                if (_secondButton == null)
+                {
+                    _secondButton = button2;
+                    _secondButton.Click += ButtonClick;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void ButtonClick(Office.CommandBarButton ctrl,
+                ref bool cancel)
+        {
+            if(ctrl.Caption =="Create capSpire Contacts")
+                AddContactsToItems();
         }
 
         private void AddContactsToItems()
